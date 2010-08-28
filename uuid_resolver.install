@@ -1,0 +1,23 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Module installer.
+ */
+
+/**
+ * Implementation of hook_install.
+ */
+function uuid_resolver_install() {
+  variable_set('uuid_resolver_node_enabled', TRUE);
+  variable_set('uuid_resolver_taxonomy_term_enabled', TRUE);
+}
+
+/**
+ * Implementation of hook_uninstall.
+ */
+function uuid_resolver_uninstall() {
+  db_query("DELETE FROM {variable} WHERE name = 'uuid_resolver%%'");
+  cache_clear_all('variables');
+  cache_clear_all('uuid_resolver');
+}

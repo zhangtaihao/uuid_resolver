@@ -1,0 +1,13 @@
+/* $Id$ */
+
+#uuid-resolver-overview-table {
+  width: 100%;
+}
+
+#uuid-resolver-overview-table tr.disabled td {
+  color: #CCC;
+}
+
+#uuid-resolver-actions {
+  text-align: right;
+}

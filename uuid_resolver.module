@@ -1,0 +1,295 @@
+<?php
+// $Id$
+/**
+ * @file
+ * UUID resolver
+ * Matches UUIDs using menu callback paths to redirect to entity.
+ */
+
+/** Default global base path for UUID resolution. */
+define('UUID_RESOLVER_BASE_PATH', 'uuid');
+
+/** Default HTTP response code. */
+define('UUID_RESOLVER_HTTP_CODE', 302);
+
+/**
+ * Implementation of hook_init.
+ */
+function uuid_resolver_init() {
+  // Load include files
+  $pattern = './' . drupal_get_path('module', 'uuid_resolver') . '/includes/*.inc';
+  foreach (glob($pattern) as $inc) {
+    include_once($inc);
+  }
+}
+
+/**
+ * Implementation of hook_perm.
+ */
+function uuid_resolver_perm() {
+  return array('administer uuid resolver');
+}
+
+/**
+ * Implementation of hook_help.
+ */
+function uuid_resolver_help($path, $arg) {
+  switch ($path) {
+    case 'admin/settings/uuid_resolver':
+    case 'admin/settings/uuid_resolver/overview':
+      return '<p>'.t('All UUID resolvers are listed below. Enable a resolver for it to listen on its base path for UUIDs and redirect to the path of the actual object.').'</p>';
+  }
+}
+
+/**
+ * Implementation of hook_menu.
+ */
+function uuid_resolver_menu() {
+  $access = array('administer uuid resolver');
+
+  $items['admin/settings/uuid_resolver'] = array(
+    'title' => t('UUID resolver'),
+    'description' => t('List all UUID path resolvers.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uuid_resolver_overview_form'),
+    'access arguments' => $access,
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'admin.inc',
+  );
+
+  $items['admin/settings/uuid_resolver/overview'] = array(
+    'title' => t('Overview'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  ) + $items['admin/settings/uuid_resolver'];
+
+  $items['admin/settings/uuid_resolver/refresh'] = array(
+    'title' => t('Refresh UUID resolvers'),
+    'page callback' => 'uuid_resolver_refresh',
+    'access arguments' => $access,
+    'type' => MENU_CALLBACK,
+    'file' => 'admin.inc',
+  );
+
+  $items['admin/settings/uuid_resolver/%uuid_resolver_info'] = array(
+    'title' => t('Resolver'),
+    'description' => t('Configure resolver settings.'),
+    'page callback' => 'uuid_resolver_resolver_settings',
+    'page arguments' => array(3),
+    'access arguments' => $access,
+    'type' => MENU_CALLBACK,
+    'file' => 'admin.inc',
+  );
+
+  $items['admin/settings/uuid_resolver/settings'] = array(
+    'title' => t('Settings'),
+    'description' => t('Configure settings for UUID path resolution.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uuid_resolver_settings_form'),
+    'access arguments' => $access,
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_menu_alter.
+ */
+function uuid_resolver_menu_alter(&$items) {
+  // Register path resolvers
+  $bins = _uuid_resolver_path_bins();
+  foreach ($bins as $path => $types) {
+    $path = trim($path, '/');
+    $argi = substr_count($path, '/') + 1;
+    $items[$path.'/%'] = array(
+      'title' => t('UUID resolver callback'),
+      'page callback' => 'uuid_resolver_resolve',
+      'page arguments' => array($types, $argi),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    );
+  }
+}
+
+/**
+ * Implementation of hook_load.
+ * @return  Resolver info.
+ */
+function uuid_resolver_info_load($name) {
+  $resolvers = uuid_resolver_get_resolvers();
+  return $resolvers[$name];
+}
+
+/**
+ * Implementation of hook_theme.
+ */
+function uuid_resolver_theme() {
+  return array(
+    'uuid_resolver_overview_form' => array(
+      'file' => 'admin.inc',
+    ),
+  );
+}
+
+/**
+ * Get title of resolver.
+ * @param $resolver  Resolver info.
+ * @return  Title of resolver.
+ */
+function uuid_resolver_get_title($resolver) {
+  return $resolver['title'];
+}
+
+/**
+ * Get a well-formed HTTP response code from settings.
+ * @return  HTTP response code.
+ */
+function uuid_resolver_get_http_code() {
+  $code = (int) variable_get('uuid_resolver_http_code', UUID_RESOLVER_HTTP_CODE);
+  if ($code < 100 || $code >= 600) {
+    // Use default for bad code
+    $code = UUID_RESOLVER_HTTP_CODE;
+  }
+  return $code;
+}
+
+/**
+ * Resolve UUID. This is the main handler for UUID resolution.
+ * @param $types  Array of object types to resolve.
+ * @param $uuid  UUID to resolve.
+ */
+function uuid_resolver_resolve($types, $uuid) {
+  if (uuid_is_valid($uuid)) {
+    $resolvers = uuid_resolver_get_resolvers();
+    foreach ($types as $type) {
+      $callback = $resolvers[$type]['callback'];
+      if (function_exists($callback)) {
+        $args = is_array($resolvers[$type]['callback arguments']) ?
+            $resolvers[$type]['callback arguments'] : array();
+        array_unshift($args, $uuid);
+        $path = call_user_func_array($callback, $args);
+        if (is_string($path) && !empty($path)) {
+          drupal_goto($path, NULL, NULL, uuid_resolver_get_http_code());
+        }
+      }
+    }
+  }
+
+  drupal_not_found();
+}
+
+/**
+ * Get whether a resolver exists.
+ * @param $resolver  Name of resolver.
+ * @return  TRUE if resolver exists, FALSE otherwise.
+ */
+function uuid_resolver_exists($resolver) {
+  return in_array((string) $resolver, array_keys(uuid_resolver_get_resolvers()), TRUE);
+}
+
+/**
+ * Get whether a resolver is enabled.
+ * @param $resolver  Name of resolver.
+ * @param $skip_check  If TRUE, this function will query the variable regardless of validity.
+ * @return  TRUE/FALSE indicating whether the resolver is enabled, or NULL if resolver does not exist.
+ */
+function uuid_resolver_is_enabled($resolver, $skip_check = FALSE) {
+  return $skip_check || uuid_resolver_exists($resolver) ?
+      variable_get('uuid_resolver_'.$resolver.'_enabled', FALSE) :
+      NULL;
+}
+
+/**
+ * Set whether a resolver is enabled.
+ * @param $resolver  Name of resolver.
+ * @param $enabled  TRUE/FALSE indicating whether the resolver is enabled, or NULL if resolver does not exist.
+ */
+function uuid_resolver_set_enabled($resolver, $enabled) {
+  if (!uuid_resolver_exists($resolver)) {
+    return;
+  }
+  variable_set('uuid_resolver_'.$resolver.'_enabled', $enabled);
+}
+
+/**
+ * Get the base path a resolver uses.
+ * @param $resolver  Name of resolver.
+ * @param $skip_check  If TRUE, this function will query the variable regardless of validity.
+ * @return  String base path for resolving UUIDs, or NULL if resolver does not exist.
+ */
+function uuid_resolver_get_base_path($resolver, $skip_check = FALSE) {
+  if (!$skip_check && !uuid_resolver_exists($resolver)) {
+    return NULL;
+  }
+  return variable_get('uuid_resolver_'.$resolver.'_base_path', UUID_RESOLVER_BASE_PATH);
+}
+
+/**
+ * Set the base path a resolver uses.
+ * @param $resolver  Name of resolver.
+ * @param $path  String base path for resolving UUIDs.
+ */
+function uuid_resolver_set_base_path($resolver, $path) {
+  if (!uuid_resolver_exists($resolver)) {
+    return;
+  }
+  return variable_set('uuid_resolver_'.$resolver.'_base_path', $path);
+}
+
+/**
+ * Invoke all hook_uuid_resolver to build a list of resolvers.
+ * @param $full  If TRUE, resolver status and basic settings are attached, specifically 'enabled' and 'base_path'.
+ * @return  An array of resolvers keyed by name.
+ */
+function uuid_resolver_get_resolvers($full = FALSE) {
+  // Check cache
+  $resolvers = cache_get('uuid_resolver_info');
+  if (!is_array($resolvers)) {
+    // Rebuild cache
+    $resolvers = module_invoke_all('uuid_resolver_info');
+    ksort($resolvers);
+
+    foreach ($resolvers as $name => $info) {
+      if (!isset($info['title']) || !isset($info['callback'])) {
+        unset($resolvers[$name]);
+        continue;
+      }
+      // Add name
+      $resolvers[$name] = array('name' => $name) + (array) $info;
+    }
+
+    // Cache and return
+    cache_set('uuid_resolver_info', $resolvers);
+  }
+  if ($full) {
+    // Load values
+    foreach ($resolvers as $name => &$info) {
+      $info['enabled'] = uuid_resolver_is_enabled($name, TRUE);
+      $info['base_path'] = uuid_resolver_get_base_path($name, TRUE);
+    }
+  }
+  return $resolvers;
+}
+
+/**
+ * Flush cached resolver elements.
+ */
+function uuid_resolver_cache_clear() {
+  cache_clear_all('uuid_resolver', 'cache', TRUE);
+  menu_rebuild();
+}
+
+/**
+ * Map base paths to the type of entity to resolve UUIDs for.
+ * @return  An array of groups of resolvers keyed by common base paths.
+ */
+function _uuid_resolver_path_bins() {
+  $bins = array();
+  foreach (uuid_resolver_get_resolvers() as $resolver => $info) {
+    if (uuid_resolver_is_enabled($resolver)) {
+      $bins[uuid_resolver_get_base_path($resolver)][] = $resolver;
+    }
+  }
+  return $bins;
+}
