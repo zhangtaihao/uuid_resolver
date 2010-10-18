@@ -6,32 +6,28 @@
  * Matches UUIDs using menu callback paths to redirect to entity.
  */
 
-/** Default global base path for UUID resolution. */
-define('UUID_RESOLVER_BASE_PATH', 'uuid');
-
-/** Default HTTP response code. */
-define('UUID_RESOLVER_HTTP_CODE', 302);
-
 /**
- * Implementation of hook_init.
+ * Implements hook_init().
  */
 function uuid_resolver_init() {
+  // Load common
+  module_load_include('inc', 'uuid_resolver', 'common');
   // Load include files
-  $pattern = './' . drupal_get_path('module', 'uuid_resolver') . '/includes/*.inc';
-  foreach (glob($pattern) as $inc) {
-    include_once($inc);
+  $files = file_scan_directory(drupal_get_path('module', 'uuid_resolver').'/includes', '\.inc$');
+  foreach ($files as $file) {
+    include_once($file->filename);
   }
 }
 
 /**
- * Implementation of hook_perm.
+ * Implements hook_perm().
  */
 function uuid_resolver_perm() {
   return array('administer uuid resolver');
 }
 
 /**
- * Implementation of hook_help.
+ * Implements hook_help().
  */
 function uuid_resolver_help($path, $arg) {
   switch ($path) {
@@ -42,14 +38,14 @@ function uuid_resolver_help($path, $arg) {
 }
 
 /**
- * Implementation of hook_menu.
+ * Implements hook_menu().
  */
 function uuid_resolver_menu() {
   $access = array('administer uuid resolver');
 
   $items['admin/settings/uuid_resolver'] = array(
-    'title' => t('UUID resolver'),
-    'description' => t('List all UUID path resolvers.'),
+    'title' => 'UUID resolver',
+    'description' => 'List all UUID path resolvers.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uuid_resolver_overview_form'),
     'access arguments' => $access,
@@ -58,12 +54,12 @@ function uuid_resolver_menu() {
   );
 
   $items['admin/settings/uuid_resolver/overview'] = array(
-    'title' => t('Overview'),
+    'title' => 'Overview',
     'type' => MENU_DEFAULT_LOCAL_TASK,
   ) + $items['admin/settings/uuid_resolver'];
 
   $items['admin/settings/uuid_resolver/refresh'] = array(
-    'title' => t('Refresh UUID resolvers'),
+    'title' => 'Refresh UUID resolvers',
     'page callback' => 'uuid_resolver_refresh',
     'access arguments' => $access,
     'type' => MENU_CALLBACK,
@@ -71,8 +67,8 @@ function uuid_resolver_menu() {
   );
 
   $items['admin/settings/uuid_resolver/%uuid_resolver_info'] = array(
-    'title' => t('Resolver'),
-    'description' => t('Configure resolver settings.'),
+    'title' => 'Resolver',
+    'description' => 'Configure resolver settings.',
     'page callback' => 'uuid_resolver_resolver_settings',
     'page arguments' => array(3),
     'access arguments' => $access,
@@ -81,8 +77,8 @@ function uuid_resolver_menu() {
   );
 
   $items['admin/settings/uuid_resolver/settings'] = array(
-    'title' => t('Settings'),
-    'description' => t('Configure settings for UUID path resolution.'),
+    'title' => 'Settings',
+    'description' => 'Configure settings for UUID path resolution.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uuid_resolver_settings_form'),
     'access arguments' => $access,
@@ -94,7 +90,8 @@ function uuid_resolver_menu() {
 }
 
 /**
- * Implementation of hook_menu_alter.
+ * Implements hook_menu_alter().
+ * Injects menu callbacks for each enabled resolver.
  */
 function uuid_resolver_menu_alter(&$items) {
   // Register path resolvers
@@ -103,7 +100,7 @@ function uuid_resolver_menu_alter(&$items) {
     $path = trim($path, '/');
     $argi = substr_count($path, '/') + 1;
     $items[$path.'/%'] = array(
-      'title' => t('UUID resolver callback'),
+      'title' => 'UUID resolver callback',
       'page callback' => 'uuid_resolver_resolve',
       'page arguments' => array($types, $argi),
       'access callback' => TRUE,
@@ -113,7 +110,7 @@ function uuid_resolver_menu_alter(&$items) {
 }
 
 /**
- * Implementation of hook_load.
+ * Wildcard loader for 'uuid_resolver_info'.
  * @return  Resolver info.
  */
 function uuid_resolver_info_load($name) {
@@ -122,7 +119,7 @@ function uuid_resolver_info_load($name) {
 }
 
 /**
- * Implementation of hook_theme.
+ * Implements hook_theme().
  */
 function uuid_resolver_theme() {
   return array(
@@ -146,7 +143,7 @@ function uuid_resolver_get_title($resolver) {
  * @return  HTTP response code.
  */
 function uuid_resolver_get_http_code() {
-  $code = (int) variable_get('uuid_resolver_http_code', UUID_RESOLVER_HTTP_CODE);
+  $code = (int) variable_get('uuid_resolver_http_code', 302);
   if ($code < 100 || $code >= 600) {
     // Use default for bad code
     $code = UUID_RESOLVER_HTTP_CODE;
@@ -204,9 +201,10 @@ function uuid_resolver_is_enabled($resolver, $skip_check = FALSE) {
  * Set whether a resolver is enabled.
  * @param $resolver  Name of resolver.
  * @param $enabled  TRUE/FALSE indicating whether the resolver is enabled, or NULL if resolver does not exist.
+ * @param $skip_check  If TRUE, this function will set the variable regardless of validity.
  */
-function uuid_resolver_set_enabled($resolver, $enabled) {
-  if (!uuid_resolver_exists($resolver)) {
+function uuid_resolver_set_enabled($resolver, $enabled, $skip_check = FALSE) {
+  if (!$skip_check && !uuid_resolver_exists($resolver)) {
     return;
   }
   variable_set('uuid_resolver_'.$resolver.'_enabled', $enabled);
@@ -222,16 +220,17 @@ function uuid_resolver_get_base_path($resolver, $skip_check = FALSE) {
   if (!$skip_check && !uuid_resolver_exists($resolver)) {
     return NULL;
   }
-  return variable_get('uuid_resolver_'.$resolver.'_base_path', UUID_RESOLVER_BASE_PATH);
+  return variable_get('uuid_resolver_'.$resolver.'_base_path', 'uuid');
 }
 
 /**
  * Set the base path a resolver uses.
  * @param $resolver  Name of resolver.
  * @param $path  String base path for resolving UUIDs.
+ * @param $skip_check  If TRUE, this function will set the variable regardless of validity.
  */
-function uuid_resolver_set_base_path($resolver, $path) {
-  if (!uuid_resolver_exists($resolver)) {
+function uuid_resolver_set_base_path($resolver, $path, $skip_check = FALSE) {
+  if (!$skip_check && !uuid_resolver_exists($resolver)) {
     return;
   }
   return variable_set('uuid_resolver_'.$resolver.'_base_path', $path);
@@ -249,6 +248,7 @@ function uuid_resolver_get_resolvers($full = FALSE) {
     // Rebuild cache
     $resolvers = module_invoke_all('uuid_resolver_info');
     ksort($resolvers);
+    variable_set('uuid_resolver_available', array_keys($resolvers));
 
     foreach ($resolvers as $name => $info) {
       if (!isset($info['title']) || !isset($info['callback'])) {
@@ -276,7 +276,7 @@ function uuid_resolver_get_resolvers($full = FALSE) {
  * Flush cached resolver elements.
  */
 function uuid_resolver_cache_clear() {
-  cache_clear_all('uuid_resolver', 'cache', TRUE);
+  cache_clear_all('uuid_resolver_info', 'cache', TRUE);
   menu_rebuild();
 }
 

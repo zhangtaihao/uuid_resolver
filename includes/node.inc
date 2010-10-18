@@ -2,22 +2,19 @@
 // $Id$
 /**
  * @file
- * Node UUID resolver.
+ * Implements UUID resolver on behalf of node module.
  */
 
-/** Default setting for 'use alias'. */
-define('UUID_RESOLVER_NODE_USE_ALIAS', TRUE);
-
 /**
- * Implementation of hook_uuid_resolver_info.
+ * Implements hook_uuid_resolver_info().
  */
 function node_uuid_resolver_info() {
   $resolvers['node'] = array(
-    'title' => t('Node'),
+    'title' => 'Node',
     'callback' => 'uuid_resolver_resolve_node',
   );
   $resolvers['node_revision'] = array(
-    'title' => t('Node revision'),
+    'title' => 'Node revision',
     'callback' => 'uuid_resolver_resolve_node_revision',
   );
   return $resolvers;
@@ -32,7 +29,7 @@ function uuid_resolver_resolve_node($uuid) {
   $nid = db_result(db_query("SELECT nid FROM {uuid_node} WHERE uuid = '%s'", $uuid));
   if ($nid) {
     $path = 'node/'.$nid;
-    if (variable_get('uuid_resolver_node_use_alias', UUID_RESOLVER_NODE_USE_ALIAS)) {
+    if (variable_get('uuid_resolver_node_use_alias', FALSE)) {
       return drupal_get_path_alias($path);
     } else {
       return $path;
@@ -55,7 +52,7 @@ function uuid_resolver_resolve_node_revision($uuid) {
 }
 
 /**
- * Implementation of hook_form_FORM_ID_alter.
+ * Implements hook_form_FORM_ID_alter() for uuid_resolver_node_settings_form().
  */
 function node_form_uuid_resolver_node_settings_form_alter(&$form, &$form_state) {
   $form['#submit'][] = 'uuid_resolver_node_extra_settings_form_submit';
@@ -63,7 +60,7 @@ function node_form_uuid_resolver_node_settings_form_alter(&$form, &$form_state) 
     '#title' => t('Redirect to path alias.'),
     '#description' => t('If checked, the resolver will redirect to the aliased path instead of the system path.'),
     '#type' => 'checkbox',
-    '#default_value' => variable_get('uuid_resolver_node_use_alias', UUID_RESOLVER_NODE_USE_ALIAS),
+    '#default_value' => variable_get('uuid_resolver_node_use_alias', FALSE),
   );
 }
 

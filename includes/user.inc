@@ -2,18 +2,18 @@
 // $Id$
 /**
  * @file
- * User UUID resolver.
+ * Implements UUID resolver on behalf of user module.
  */
 
 /** Default setting for 'use alias'. */
 define('UUID_RESOLVER_USER_USE_ALIAS', FALSE);
 
 /**
- * Implementation of hook_uuid_resolver_info.
+ * Implements hook_uuid_resolver_info().
  */
 function user_uuid_resolver_info() {
   $resolvers['user'] = array(
-    'title' => t('User'),
+    'title' => 'User',
     'callback' => 'uuid_resolver_resolve_user',
   );
   return $resolvers;
@@ -39,9 +39,9 @@ function uuid_resolver_resolve_user($uuid) {
 }
 
 /**
- * Implementation of hook_form_FORM_ID_alter.
+ * Implements hook_form_FORM_ID_alter() for uuid_resolver_user_settings_form().
  */
-function node_form_uuid_resolver_user_settings_form_alter(&$form, &$form_state) {
+function user_form_uuid_resolver_user_settings_form_alter(&$form, &$form_state) {
   $form['#submit'][] = 'uuid_resolver_user_extra_settings_form_submit';
   $form['use_alias'] = array(
     '#title' => t('Redirect to path alias.'),

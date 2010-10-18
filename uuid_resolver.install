@@ -6,18 +6,44 @@
  */
 
 /**
- * Implementation of hook_install.
+ * Implements hook_install().
  */
 function uuid_resolver_install() {
+  // Initialize basic module variables
+  variable_set('uuid_resolver_http_code', 302);
+  variable_set('uuid_resolver_available', array('node', 'node_revision', 'taxonomy_term', 'user'));
+
+  // Initialize built-in implementation variables
   variable_set('uuid_resolver_node_enabled', TRUE);
+  variable_set('uuid_resolver_node_base_path', 'uuid');
+  variable_set('uuid_resolver_node_use_alias', TRUE);
+  variable_set('uuid_resolver_node_revision_enabled', FALSE);
+  variable_set('uuid_resolver_node_revision_base_path', 'uuid');
   variable_set('uuid_resolver_taxonomy_term_enabled', TRUE);
+  variable_set('uuid_resolver_taxonomy_term_base_path', 'uuid');
+  variable_set('uuid_resolver_taxonomy_term_use_alias', TRUE);
+  variable_set('uuid_resolver_user_enabled', FALSE);
+  variable_set('uuid_resolver_user_base_path', 'uuid');
+  variable_set('uuid_resolver_user_use_alias', FALSE);
 }
 
 /**
- * Implementation of hook_uninstall.
+ * Implements hook_uninstall().
  */
 function uuid_resolver_uninstall() {
-  db_query("DELETE FROM {variable} WHERE name = 'uuid_resolver%%'");
-  cache_clear_all('variables');
-  cache_clear_all('uuid_resolver');
+  // Clean up variables
+  variable_del('uuid_resolver_http_code');
+
+  foreach (variable_get('uuid_resolver_available', array()) as $resolver) {
+    variable_del('uuid_resolver_'.$resolver.'_enabled');
+    variable_del('uuid_resolver_'.$resolver.'_base_path');
+  }
+  variable_del('uuid_resolver_available');
+
+  variable_del('uuid_resolver_node_use_alias');
+  variable_del('uuid_resolver_taxonomy_term_use_alias');
+  variable_del('uuid_resolver_user_use_alias');
+
+  // Clear cache
+  cache_clear_all('uuid_resolver_info', 'cache', TRUE);
 }

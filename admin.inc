@@ -35,7 +35,7 @@ function uuid_resolver_overview_form(&$form_state) {
       ),
     );
     $row['title'] = array(
-      '#value' => $info['title'],
+      '#value' => t($info['title']),
     );
     $row['path'] = array(
       '#value' => uuid_resolver_get_base_path($resolver) . '/%',
@@ -137,7 +137,7 @@ function _uuid_resolver_overview_compare_resolvers($a, $b, $criteria = NULL) {
 }
 
 /**
- * Overview form renderer.
+ * Renderer for uuid_resolver_overview_form().
  */
 function theme_uuid_resolver_overview_form($form) {
   drupal_set_title(t('UUID resolvers'));
@@ -296,7 +296,7 @@ function uuid_resolver_forms() {
  * Resolver settings page.
  */
 function uuid_resolver_resolver_settings($resolver_info) {
-  drupal_set_title(t('Configure settings for %resolver resolver.', array('%resolver' => $resolver_info['title'])));
+  drupal_set_title(t('Configure settings for %resolver resolver.', array('%resolver' => t($resolver_info['title']))));
   drupal_add_js(drupal_get_path('module', 'uuid_resolver') . '/admin.js');
   return drupal_get_form('uuid_resolver_'.$resolver_info['name'].'_settings_form', $resolver_info);
 }
@@ -367,7 +367,7 @@ function uuid_resolver_resolver_settings_form_submit($form, &$form_state) {
   uuid_resolver_set_base_path($resolver, $values['base_path']);
   uuid_resolver_cache_clear();
 
-  drupal_set_message(t('Saved settings for @resolver resolver.', array('@resolver' => $resolver_info['title'])));
+  drupal_set_message(t('Saved settings for @resolver resolver.', array('@resolver' => t($resolver_info['title']))));
   $form_state['redirect'] = 'admin/settings/uuid_resolver';
 }
 

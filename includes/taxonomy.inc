@@ -2,18 +2,15 @@
 // $Id$
 /**
  * @file
- * Taxonomy UUID resolver.
+ * Implements UUID resolver on behalf of taxonomy module.
  */
 
-/** Default setting for 'use alias'. */
-define('UUID_RESOLVER_TAXONOMY_TERM_USE_ALIAS', TRUE);
-
 /**
- * Implementation of hook_uuid_resolver_info.
+ * Implements hook_uuid_resolver_info().
  */
 function taxonomy_uuid_resolver_info() {
   $resolvers['taxonomy_term'] = array(
-    'title' => t('Taxonomy term'),
+    'title' => 'Taxonomy term',
     'callback' => 'uuid_resolver_resolve_taxonomy_term',
   );
   return $resolvers;
@@ -28,7 +25,7 @@ function uuid_resolver_resolve_taxonomy_term($uuid) {
   $tid = db_result(db_query("SELECT tid FROM {uuid_term_data} WHERE uuid = '%s'", $uuid));
   if ($tid) {
     $path = 'taxonomy/term/'.$tid;
-    if (variable_get('uuid_resolver_taxonomy_term_use_alias', UUID_RESOLVER_TAXONOMY_TERM_USE_ALIAS)) {
+    if (variable_get('uuid_resolver_taxonomy_term_use_alias', FALSE)) {
       return drupal_get_path_alias($path);
     } else {
       return $path;
@@ -39,15 +36,15 @@ function uuid_resolver_resolve_taxonomy_term($uuid) {
 }
 
 /**
- * Implementation of hook_form_FORM_ID_alter.
+ * Implements hook_form_FORM_ID_alter() for uuid_resolver_taxonomy_term_settings_form().
  */
-function node_form_uuid_resolver_taxonomy_term_settings_form_alter(&$form, &$form_state) {
+function taxonomy_form_uuid_resolver_taxonomy_term_settings_form_alter(&$form, &$form_state) {
   $form['#submit'][] = 'uuid_resolver_taxonomy_term_extra_settings_form_submit';
   $form['use_alias'] = array(
     '#title' => t('Redirect to path alias.'),
     '#description' => t('If checked, the resolver will redirect to the aliased path instead of the system path.'),
     '#type' => 'checkbox',
-    '#default_value' => variable_get('uuid_resolver_taxonomy_term_use_alias', UUID_RESOLVER_TAXONOMY_TERM_USE_ALIAS),
+    '#default_value' => variable_get('uuid_resolver_taxonomy_term_use_alias', FALSE),
   );
 }
 
