@@ -24,13 +24,15 @@ function taxonomy_uuid_resolver_info() {
 function uuid_resolver_resolve_taxonomy_term($uuid) {
   $tid = db_result(db_query("SELECT tid FROM {uuid_term_data} WHERE uuid = '%s'", $uuid));
   if ($tid) {
-    $path = 'taxonomy/term/'.$tid;
+    $path = 'taxonomy/term/' . $tid;
     if (variable_get('uuid_resolver_taxonomy_term_use_alias', FALSE)) {
       return drupal_get_path_alias($path);
-    } else {
+    }
+    else {
       return $path;
     }
-  } else {
+  }
+  else {
     return FALSE;
   }
 }

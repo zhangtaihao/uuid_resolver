@@ -35,13 +35,13 @@ function uuid_resolver_overview_form(&$form_state) {
       ),
     );
     $row['title'] = array(
-      '#value' => t($info['title']),
+      '#value' => check_plain($info['title']),
     );
     $row['path'] = array(
-      '#value' => uuid_resolver_get_base_path($resolver) . '/%',
+      '#value' => check_plain(uuid_resolver_get_base_path($resolver) . '/%'),
     );
     $row['operations'] = array(
-      '#value' => l(t('Configure'), 'admin/settings/uuid_resolver/'.$resolver, array('class' => 'uuid-resolver-configure')),
+      '#value' => filter_xss(l(t('Configure'), 'admin/settings/uuid_resolver/' . check_url($resolver), array('class' => 'uuid-resolver-configure'))),
     );
     $row[$resolver] = array(
       '#type' => 'checkbox',
@@ -128,7 +128,8 @@ function _uuid_resolver_overview_compare_resolvers($a, $b, $criteria = NULL) {
     if ($a[$order] > $b[$order]) {
       $diff = $dir;
       break;
-    } else {
+    }
+    else {
       $diff = -$dir;
       break;
     }
@@ -143,7 +144,7 @@ function theme_uuid_resolver_overview_form($form) {
   drupal_set_title(t('UUID resolvers'));
   drupal_add_js(drupal_get_path('module', 'uuid_resolver') . '/admin.js');
   drupal_add_css(drupal_get_path('module', 'uuid_resolver') . '/admin.css');
-  $output = '<p>'.l(t('Refresh list'), 'admin/settings/uuid_resolver/refresh').'</p>';
+  $output = '<p>' . l(t('Refresh list'), 'admin/settings/uuid_resolver/refresh') . '</p>';
 
   // Set up sorting
   $resolvers_info = uuid_resolver_get_resolvers(TRUE);
@@ -284,7 +285,7 @@ function uuid_resolver_forms() {
   $forms = array();
   $resolvers = uuid_resolver_get_resolvers();
   foreach ($resolvers as $resolver => $resolver_info) {
-    $forms['uuid_resolver_'.$resolver.'_settings_form'] = array(
+    $forms['uuid_resolver_' . $resolver . '_settings_form'] = array(
       'callback' => 'uuid_resolver_resolver_settings_form',
       'callback arguments' => array($resolver_info),
     );
@@ -298,7 +299,7 @@ function uuid_resolver_forms() {
 function uuid_resolver_resolver_settings($resolver_info) {
   drupal_set_title(t('Configure settings for %resolver resolver.', array('%resolver' => t($resolver_info['title']))));
   drupal_add_js(drupal_get_path('module', 'uuid_resolver') . '/admin.js');
-  return drupal_get_form('uuid_resolver_'.$resolver_info['name'].'_settings_form', $resolver_info);
+  return drupal_get_form('uuid_resolver_' . $resolver_info['name'] . '_settings_form', $resolver_info);
 }
 
 /**

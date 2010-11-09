@@ -2,8 +2,10 @@
 // $Id$
 
 /**
- * @mainpage
+ * @file
+ * UUID Resolver API documentation.
  *
+ * @mainpage
  * @verbinclude README.txt
  */
 
@@ -27,9 +29,7 @@
  *     - 'callback arguments' : An array of arguments to pass through to the
  *         callback function in addition to the request UUID.
  *
- * @see example_uuid_resolve_callback(), example2_uuid_resolve_callback(),
- *   node_uuid_resolver_info(), taxonomy_uuid_resolver_info(),
- *   user_uuid_resolver_info().
+ * @see example_uuid_resolve_callback(), example2_uuid_resolve_callback(), node_uuid_resolver_info(), taxonomy_uuid_resolver_info(), user_uuid_resolver_info()
  */
 function hook_uuid_resolver_info() {
   $resolvers['example'] = array(
@@ -56,7 +56,7 @@ function example_uuid_resolve_callback($uuid) {
   // Look up object
   $node = node_get_by_uuid($uuid);
   if ($node->type == 'example') {
-    return 'example/'.variable_get('example_setting', '0').'/'.$node->nid;
+    return 'example/' . variable_get('example_setting', '0') . '/' . $node->nid;
   }
 }
 
@@ -76,7 +76,7 @@ function example_uuid_resolve_callback($uuid) {
 function example2_uuid_resolve_callback($uuid, $a1, $a2) {
   if ($a1 == 'foo' && $a2 == 'bar') {
     $hash = md5($uuid);
-    return 'foobar/'.$hash;
+    return 'foobar/' . $hash;
   }
 }
 
@@ -91,7 +91,7 @@ function example2_uuid_resolve_callback($uuid, $a1, $a2) {
  */
 
 /**
- * Implementation of hook_form_FORM_ID_alter.
+ * Implements hook_form_FORM_ID_alter() for uuid_resolver_example_settings_form.
  *
  * Adds new settings to the resolver configurable via the settings form for the
  * UUID resolver by extending the form. By default, UUID resolver provides a

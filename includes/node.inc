@@ -28,10 +28,11 @@ function node_uuid_resolver_info() {
 function uuid_resolver_resolve_node($uuid) {
   $nid = db_result(db_query("SELECT nid FROM {uuid_node} WHERE uuid = '%s'", $uuid));
   if ($nid) {
-    $path = 'node/'.$nid;
+    $path = 'node/' . $nid;
     if (variable_get('uuid_resolver_node_use_alias', FALSE)) {
       return drupal_get_path_alias($path);
-    } else {
+    }
+    else {
       return $path;
     }
   }
@@ -47,7 +48,7 @@ function uuid_resolver_resolve_node_revision($uuid) {
       {uuid_node_revisions} u LEFT JOIN {node_revisions} v ON u.vid = v.vid
       WHERE uuid = '%s'", $uuid));
   if ($match) {
-    return 'node/'.$match['nid'].'/revisions/'.$match['vid'].'/view';
+    return 'node/' . $match['nid'] . '/revisions/' . $match['vid'] . '/view';
   }
 }
 

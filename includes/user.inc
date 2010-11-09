@@ -5,7 +5,9 @@
  * Implements UUID resolver on behalf of user module.
  */
 
-/** Default setting for 'use alias'. */
+/**
+ * Default setting for 'use alias'.
+ */
 define('UUID_RESOLVER_USER_USE_ALIAS', FALSE);
 
 /**
@@ -27,13 +29,15 @@ function user_uuid_resolver_info() {
 function uuid_resolver_resolve_user($uuid) {
   $uid = db_result(db_query("SELECT uid FROM {uuid_users} WHERE uuid = '%s'", $uuid));
   if ($uid) {
-    $path = 'user/'.$uid;
+    $path = 'user/' . $uid;
     if (variable_get('uuid_resolver_user_use_alias', UUID_RESOLVER_USER_USE_ALIAS)) {
       return drupal_get_path_alias($path);
-    } else {
+    }
+    else {
       return $path;
     }
-  } else {
+  }
+  else {
     return FALSE;
   }
 }

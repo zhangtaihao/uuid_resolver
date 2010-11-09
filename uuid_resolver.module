@@ -13,7 +13,7 @@ function uuid_resolver_init() {
   // Load common
   module_load_include('inc', 'uuid_resolver', 'common');
   // Load include files
-  $files = file_scan_directory(drupal_get_path('module', 'uuid_resolver').'/includes', '\.inc$');
+  $files = file_scan_directory(drupal_get_path('module', 'uuid_resolver') . '/includes', '\.inc$');
   foreach ($files as $file) {
     include_once($file->filename);
   }
@@ -33,7 +33,7 @@ function uuid_resolver_help($path, $arg) {
   switch ($path) {
     case 'admin/settings/uuid_resolver':
     case 'admin/settings/uuid_resolver/overview':
-      return '<p>'.t('All UUID resolvers are listed below. Enable a resolver for it to listen on its base path for UUIDs and redirect to the path of the actual object.').'</p>';
+      return '<p>' . t('All UUID resolvers are listed below. Enable a resolver for it to listen on its base path for UUIDs and redirect to the path of the actual object.') . '</p>';
   }
 }
 
@@ -99,7 +99,7 @@ function uuid_resolver_menu_alter(&$items) {
   foreach ($bins as $path => $types) {
     $path = trim($path, '/');
     $argi = substr_count($path, '/') + 1;
-    $items[$path.'/%'] = array(
+    $items[$path . '/%'] = array(
       'title' => 'UUID resolver callback',
       'page callback' => 'uuid_resolver_resolve',
       'page arguments' => array($types, $argi),
@@ -193,7 +193,7 @@ function uuid_resolver_exists($resolver) {
  */
 function uuid_resolver_is_enabled($resolver, $skip_check = FALSE) {
   return $skip_check || uuid_resolver_exists($resolver) ?
-      variable_get('uuid_resolver_'.$resolver.'_enabled', FALSE) :
+      variable_get('uuid_resolver_' . $resolver . '_enabled', FALSE) :
       NULL;
 }
 
@@ -207,7 +207,7 @@ function uuid_resolver_set_enabled($resolver, $enabled, $skip_check = FALSE) {
   if (!$skip_check && !uuid_resolver_exists($resolver)) {
     return;
   }
-  variable_set('uuid_resolver_'.$resolver.'_enabled', $enabled);
+  variable_set('uuid_resolver_' . $resolver . '_enabled', $enabled);
 }
 
 /**
@@ -220,7 +220,7 @@ function uuid_resolver_get_base_path($resolver, $skip_check = FALSE) {
   if (!$skip_check && !uuid_resolver_exists($resolver)) {
     return NULL;
   }
-  return variable_get('uuid_resolver_'.$resolver.'_base_path', 'uuid');
+  return variable_get('uuid_resolver_' . $resolver . '_base_path', 'uuid');
 }
 
 /**
@@ -233,7 +233,7 @@ function uuid_resolver_set_base_path($resolver, $path, $skip_check = FALSE) {
   if (!$skip_check && !uuid_resolver_exists($resolver)) {
     return;
   }
-  return variable_set('uuid_resolver_'.$resolver.'_base_path', $path);
+  return variable_set('uuid_resolver_' . $resolver . '_base_path', $path);
 }
 
 /**
