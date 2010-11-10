@@ -1,5 +1,5 @@
 ; $Id$
-name = UUID resolver
+name = UUID Resolver
 description = Resolves UUID paths to actual site entities.
 dependencies[] = uuid
 core = 6.x
