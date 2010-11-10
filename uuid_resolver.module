@@ -10,13 +10,7 @@
  * Implements hook_init().
  */
 function uuid_resolver_init() {
-  // Load common
-  module_load_include('inc', 'uuid_resolver', 'common');
-  // Load include files
-  $files = file_scan_directory(drupal_get_path('module', 'uuid_resolver') . '/includes', '\.inc$');
-  foreach ($files as $file) {
-    include_once($file->filename);
-  }
+  _uuid_resolver_load_includes();
 }
 
 /**
@@ -246,6 +240,7 @@ function uuid_resolver_get_resolvers($full = FALSE) {
   $resolvers = cache_get('uuid_resolver_info');
   if (!is_array($resolvers)) {
     // Rebuild cache
+    _uuid_resolver_load_includes();
     $resolvers = module_invoke_all('uuid_resolver_info');
     ksort($resolvers);
     variable_set('uuid_resolver_available', array_keys($resolvers));
@@ -292,4 +287,20 @@ function _uuid_resolver_path_bins() {
     }
   }
   return $bins;
+}
+
+/**
+ * Load include files implemented in this module.
+ */
+function _uuid_resolver_load_includes() {
+  static $loaded = FALSE;
+  if (!$loaded) {
+    // Load include files
+    $files = file_scan_directory(drupal_get_path('module', 'uuid_resolver') . '/includes', '\.inc$');
+    foreach ($files as $file) {
+      include_once($file->filename);
+    }
+
+    $loaded = TRUE;
+  }
 }
