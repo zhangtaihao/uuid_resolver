@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: uuid_resolver.install,v 1.1 2010/11/10 08:40:50 zhangtaihao Exp $
 /**
  * @file
  * Module installer.

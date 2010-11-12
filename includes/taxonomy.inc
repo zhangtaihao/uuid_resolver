@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: taxonomy.inc,v 1.1 2010/11/10 08:40:51 zhangtaihao Exp $
 /**
  * @file
  * Implements UUID resolver on behalf of taxonomy module.

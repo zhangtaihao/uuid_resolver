@@ -1,4 +1,4 @@
-; $Id$
+; $Id: uuid_resolver.info,v 1.1 2010/11/10 08:40:51 zhangtaihao Exp $
 name = UUID Resolver
 description = Resolves UUID paths to actual site entities.
 dependencies[] = uuid

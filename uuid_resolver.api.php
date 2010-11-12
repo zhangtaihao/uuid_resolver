@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: uuid_resolver.api.php,v 1.1 2010/11/10 08:40:51 zhangtaihao Exp $
 
 /**
  * @file

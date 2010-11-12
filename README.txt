@@ -1,4 +1,4 @@
-$Id$
+$Id: README.txt,v 1.1 2010/11/10 08:40:51 zhangtaihao Exp $
 
 UUID resolver
 =======================================

@@ -1,4 +1,4 @@
-// $Id$
+// $Id: admin.js,v 1.1 2010/11/10 08:40:51 zhangtaihao Exp $
 /**
  * @file
  * Admin interface javascript plugin.
